@@ -87,8 +87,9 @@ def pvm_to_png(fname_in, fname_out):
     save_png(fname_out, img)
 
 ## Convert images
-dir_in = 'pvm_in'
-dir_out = 'png_out'
+dir_in = os.path.dirname(os.path.realpath(__file__)) + '/pvm_in'
+dir_out = os.path.dirname(os.path.realpath(__file__)) + '/pvm_out'
+
 for f in os.listdir(dir_in):
     fname_in = dir_in + '/' + f
     fname_out = dir_out + '/' + os.path.splitext(f)[0] + '.png'
