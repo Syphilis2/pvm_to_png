@@ -1,6 +1,8 @@
+##
 import re
 import png
 import os
+import pathlib
 
 ## Load File
 def load_file(fname):
@@ -25,6 +27,12 @@ def get_pvr_data(data, pvrt_index):
     for i in pvrt_index:
         size_bytes = data[i + offset_size : i + offset_size + length_size]
         length_data = int.from_bytes(size_bytes, 'little', signed=False)
+        # additional offset for mysterious blank data
+        for j in range(i + offset_data + 3, i + offset_data + length_data, 4):
+            if data[j] != 0:
+                offset_data += (j - i - offset_data - 3)
+                break
+
         pvr_data.append(data[i + offset_data : i + offset_data + length_data])
     return pvr_data
 
@@ -54,7 +62,7 @@ def get_pvr_images(pvr_data):
             row = ()
             for x in range(w):
                 ind = (moser[x] + 2 * moser[y]) * 4
-                row = row + (int(d[ind + 2]), int(d[ind + 1]), int(d[ind + 0]))
+                row += (int(d[ind + 2]), int(d[ind + 1]), int(d[ind + 0]))
             img.append(row)
         imgs.append(img)
     return imgs
@@ -68,6 +76,15 @@ def stitch_images(imgs):
             row = imgs[i][y] + imgs[i+1][y]
             img.append(row)
     return img
+
+## Remove trailing whitespace
+def remove_whitespace(img):
+    n = len(img)
+    for i in reversed(range(n)):
+        if not set(img[i]).issubset((255,)):
+            n = i+1
+            break
+    return img[0:n]
 
 ## Save image
 def save_png(fname, img):
@@ -84,13 +101,14 @@ def pvm_to_png(fname_in, fname_out):
     pvr_data = get_pvr_data(data, pvrt_index)
     imgs = get_pvr_images(pvr_data)
     img = stitch_images(imgs)
+    img = remove_whitespace(img)
     save_png(fname_out, img)
 
 ## Convert images
-dir_in = os.path.dirname(os.path.realpath(__file__)) + '/pvm_in'
-dir_out = os.path.dirname(os.path.realpath(__file__)) + '/pvm_out'
+dir_in = pathlib.Path(r'C:\Users\pvm')
+dir_out = pathlib.Path(r'C:\Users\png')
 
 for f in os.listdir(dir_in):
-    fname_in = dir_in + '/' + f
-    fname_out = dir_out + '/' + os.path.splitext(f)[0] + '.png'
+    fname_in = dir_in.joinpath(f)
+    fname_out = dir_out.joinpath(os.path.splitext(f)[0] + '.png')
     pvm_to_png(fname_in, fname_out)
