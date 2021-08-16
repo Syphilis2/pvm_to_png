@@ -81,7 +81,7 @@ def stitch_images(imgs):
 def remove_whitespace(img):
     n = len(img)
     for i in reversed(range(n)):
-        if not set(img[i]).issubset((255,)):
+        if not set(img[i]).issubset((255, 0)):
             n = i+1
             break
     return img[0:n]
